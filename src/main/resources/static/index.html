@@ -1,0 +1,662 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text-to-SQL AI Assistant</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Prism.js for SQL Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --accent-color: #0ea5e9;
+            --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            margin: 0;
+        }
+
+        /* Animated Background Blobs */
+        .bg-blobs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .blob {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.05) 0%, rgba(79, 70, 229, 0) 70%);
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: move 25s infinite alternate ease-in-out;
+        }
+
+        .blob-1 { top: -150px; left: -150px; animation-delay: 0s; }
+        .blob-2 { bottom: -150px; right: -150px; background: radial-gradient(circle, rgba(14, 165, 233, 0.05) 0%, rgba(14, 165, 233, 0) 70%); animation-delay: -7s; }
+
+        @keyframes move {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(150px, 100px) scale(1.1); }
+        }
+
+        .main-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Style */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: #ffffff;
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+            transition: all 0.3s ease;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.02);
+        }
+
+        .main-content {
+            flex-grow: 1;
+            margin-left: var(--sidebar-width);
+            padding: 2.5rem;
+            width: calc(100% - var(--sidebar-width));
+        }
+
+        .sidebar-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+            margin-bottom: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .history-item {
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            background: #f8fafc;
+            margin-bottom: 0.6rem;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #f1f5f9;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-muted);
+        }
+
+        .history-item:hover {
+            background: #f1f5f9;
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-color: rgba(79, 70, 229, 0.2);
+        }
+
+        .form-control {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 16px;
+            padding: 1.25rem;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            background: #ffffff;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+            color: var(--text-main);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+            border: none;
+            padding: 1rem 2.5rem;
+            border-radius: 16px;
+            font-weight: 600;
+            box-shadow: 0 8px 20px -6px rgba(79, 70, 229, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px -6px rgba(79, 70, 229, 0.4);
+            background: linear-gradient(135deg, var(--primary-hover) 0%, #3730a3 100%);
+        }
+
+        .example-chip {
+            display: inline-block;
+            padding: 0.5rem 1.2rem;
+            background: #f1f5f9;
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-right: 0.6rem;
+            margin-bottom: 0.6rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-chip:hover {
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        pre[class*="language-"] {
+            border-radius: 18px;
+            background: #f8fafc !important;
+            padding: 1.5rem !important;
+            border: 1px solid var(--border-color);
+            margin: 0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .copy-btn:hover {
+            background: #f1f5f9;
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .table-container {
+            border-radius: 18px;
+            border: 1px solid var(--border-color);
+            background: #ffffff;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .table {
+            color: var(--text-main);
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background: #f8fafc;
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1.25rem 1rem;
+            font-weight: 700;
+        }
+
+        .table tbody td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+            color: var(--text-main);
+            font-weight: 400;
+        }
+
+        .table-hover tbody tr:hover {
+            background: #f1f5f9;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-success { background: rgba(16, 185, 129, 0.1); color: #059669; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        @media (max-width: 992px) {
+            .sidebar { transform: translateX(-100%); }
+            .main-content { margin-left: 0; width: 100%; padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+</div>
+
+<div class="main-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="mb-5">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="#" style="font-size: 1.25rem; color: var(--text-main); text-decoration: none;">
+                <div class="bg-primary rounded-3 p-1 me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                    <i class="fas fa-bolt text-white fa-sm"></i>
+                </div>
+                <span>AiS<span class="text-primary">QL</span></span>
+            </a>
+        </div>
+        
+        <div class="sidebar-title"><i class="fas fa-clock-rotate-left"></i> History</div>
+        <div id="queryHistory" class="flex-grow-1 overflow-auto">
+            <div class="text-center py-5 text-muted small opacity-50">
+                <i class="fas fa-history d-block mb-2 fa-2x"></i>
+                No queries yet
+            </div>
+        </div>
+
+        <div class="mt-4 pt-4 border-top border-light">
+            <div class="card p-3 bg-light border-0">
+                <div class="small fw-bold mb-1">Database Node</div>
+                <div class="status-badge status-success py-1 px-0 bg-transparent">
+                    <span class="spinner-grow spinner-grow-sm" style="width: 8px; height: 8px;"></span>
+                    Online
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container-fluid px-0">
+            <div class="row">
+                <!-- Header / Input -->
+                <div class="col-12 mb-5">
+                    <header class="mb-5">
+                        <h1 class="fw-bold mb-2">Natural Language <span class="text-primary">to SQL</span></h1>
+                        <p class="text-muted lead" style="font-size: 1rem;">Query your database using plain English. AI handles the rest.</p>
+                    </header>
+
+                    <div class="card p-4">
+                        <div class="mb-3">
+                            <label for="questionInput" class="form-label d-flex justify-content-between align-items-center mb-3">
+                                <span class="fw-bold"><i class="fas fa-keyboard me-2 text-primary"></i>What would you like to know?</span>
+                                <button class="btn btn-sm text-muted p-0 border-0" onclick="clearInput()">Clear</button>
+                            </label>
+                            <textarea id="questionInput" class="form-control" rows="3" 
+                                placeholder="e.g. List all employees who joined last month and earn more than 50000"></textarea>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="text-muted small mb-2 fw-bold uppercase">Quick Examples:</div>
+                            <div id="examples">
+                                <span class="example-chip" onclick="setExample(this)">Top 10 highest paid employees</span>
+                                <span class="example-chip" onclick="setExample(this)">Departments with no active staff</span>
+                                <span class="example-chip" onclick="setExample(this)">Total salary expense per department</span>
+                                <span class="example-chip" onclick="setExample(this)">Employees with missing managers</span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-primary d-flex align-items-center justify-content-center" onclick="runQuery()" id="runBtn" style="min-width: 200px;">
+                                <span id="btnText">Execute Intelligence</span>
+                                <div id="loadingSpinner" class="spinner-border spinner-border-sm ms-3" role="status" style="display: none;"></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Grid -->
+                <div class="col-lg-5 mb-4">
+                    <div class="card p-4 h-100 border-0" style="background: #ffffff;">
+                        <div class="section-title">
+                            <i class="fas fa-microchip text-primary"></i>AI Generated Logic
+                        </div>
+                        <div class="position-relative flex-grow-1 d-flex flex-column">
+                            <button class="copy-btn" onclick="copySql()"><i class="far fa-copy me-1"></i>Copy</button>
+                            <pre class="flex-grow-1"><code id="sqlOutput" class="language-sql">-- SQL logic will be displayed here</code></pre>
+                        </div>
+                        <div id="errorMessage" class="mt-3" style="display: none;">
+                            <div class="alert alert-danger py-3 px-3 border-0 bg-danger bg-opacity-10 text-danger small mb-0 d-flex align-items-center">
+                                <i class="fas fa-circle-exclamation me-3 fa-lg"></i>
+                                <span id="errorText"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-7 mb-4">
+                    <div class="card p-4 h-100 border-0" style="background: #ffffff;">
+                        <div class="section-title d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-table-list text-primary me-2"></i>Query Output</span>
+                            <button class="btn btn-sm btn-outline-primary border-0 rounded-pill px-3" onclick="viewFullOutput()" id="fullViewBtn" style="display: none; font-size: 0.75rem;">
+                                <i class="fas fa-expand me-1"></i>Full View
+                            </button>
+                        </div>
+                        <div id="tableContainer" class="table-container table-responsive flex-grow-1 d-flex align-items-center justify-content-center" style="min-height: 300px;">
+                            <div class="text-center py-5 opacity-50">
+                                <div class="mb-4">
+                                    <i class="fas fa-database fa-4x text-primary opacity-25"></i>
+                                </div>
+                                <h5 class="fw-bold">No Active Dataset</h5>
+                                <p class="small">Input a query above to fetch data.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Full View Modal -->
+<div class="modal fade" id="fullViewModal" tabindex="-1" aria-labelledby="fullViewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen p-md-4">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; overflow: hidden;">
+            <div class="modal-header border-0 bg-white px-4 pt-4">
+                <h5 class="modal-title fw-bold" id="fullViewModalLabel">
+                    <i class="fas fa-table-list text-primary me-2"></i>Query Insight: Full Dataset
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="modalTableContainer" class="table-container table-responsive h-100">
+                    <!-- Table will be cloned here -->
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light bg-opacity-50 px-4 py-3">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close View</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" onclick="exportToCsv()">
+                    <i class="fas fa-download me-2"></i>Export CSV
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+
+<script>
+    let queryHistory = JSON.parse(localStorage.getItem('sqlHistory') || '[]');
+    let currentRows = [];
+
+    function updateHistoryUI() {
+        const historyContainer = document.getElementById("queryHistory");
+        if (queryHistory.length === 0) return;
+        
+        historyContainer.innerHTML = queryHistory.slice(0, 10).map(q => `
+            <div class="history-item" onclick="setQuery('${q.replace(/'/g, "\\'")}')" title="${q}">
+                <i class="far fa-comment-dots me-2 opacity-50 text-primary"></i>${q}
+            </div>
+        `).join('');
+    }
+
+    function addToHistory(query) {
+        if (!queryHistory.includes(query)) {
+            queryHistory.unshift(query);
+            if (queryHistory.length > 20) queryHistory.pop();
+            localStorage.setItem('sqlHistory', JSON.stringify(queryHistory));
+            updateHistoryUI();
+        }
+    }
+
+    function setExample(el) {
+        document.getElementById("questionInput").value = el.innerText;
+    }
+
+    function setQuery(q) {
+        document.getElementById("questionInput").value = q;
+    }
+
+    function clearInput() {
+        document.getElementById("questionInput").value = "";
+    }
+
+    async function runQuery() {
+        const question = document.getElementById("questionInput").value;
+        const sqlOutput = document.getElementById("sqlOutput");
+        const errorMessage = document.getElementById("errorMessage");
+        const errorText = document.getElementById("errorText");
+        const tableContainer = document.getElementById("tableContainer");
+        const runBtn = document.getElementById("runBtn");
+        const loadingSpinner = document.getElementById("loadingSpinner");
+        const btnText = document.getElementById("btnText");
+
+        if (!question.trim()) {
+            return;
+        }
+
+        // UI State: Loading
+        runBtn.disabled = true;
+        loadingSpinner.style.display = "inline-block";
+        btnText.textContent = "Synthesizing...";
+        sqlOutput.textContent = "-- AI is processing your request...";
+        Prism.highlightElement(sqlOutput);
+        errorMessage.style.display = "none";
+        tableContainer.innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary mb-4" style="width: 3.5rem; height: 3.5rem; border-width: 0.25rem;" role="status"></div>
+                <h5 class="fw-bold">Generating Insight</h5>
+                <p class="text-muted small">Accessing database nodes and optimizing execution plan...</p>
+            </div>`;
+
+        try {
+            const response = await fetch("/api/text-to-sql", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ question: question })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                errorText.textContent = (data.message || "Execution error encountered");
+                errorMessage.style.display = "block";
+                sqlOutput.textContent = "-- Syntax or Logic Error";
+                Prism.highlightElement(sqlOutput);
+                tableContainer.innerHTML = `
+                    <div class="text-center py-5 text-danger opacity-75">
+                        <i class="fas fa-triangle-exclamation fa-4x mb-4"></i>
+                        <h5 class="fw-bold">Execution Failed</h5>
+                        <p class="small">Refer to the error log in the sidebar.</p>
+                    </div>`;
+                return;
+            }
+
+            addToHistory(question);
+            sqlOutput.textContent = data.generatedSql || "-- No SQL logic returned";
+            Prism.highlightElement(sqlOutput);
+
+            if (data.rows && data.rows.length > 0) {
+                currentRows = data.rows;
+                renderTable(data.rows);
+                document.getElementById("fullViewBtn").style.display = "block";
+            } else {
+                currentRows = [];
+                document.getElementById("fullViewBtn").style.display = "none";
+                tableContainer.innerHTML = `
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-magnifying-glass fa-4x mb-4 opacity-25"></i>
+                        <h5 class="fw-bold">Null Results</h5>
+                        <p class="small">The query was valid but no matching records were found.</p>
+                    </div>`;
+            }
+
+        } catch (err) {
+            errorText.textContent = "Infrastructure Error: " + err.message;
+            errorMessage.style.display = "block";
+            tableContainer.innerHTML = `
+                <div class="text-center py-5 text-danger opacity-75">
+                    <i class="fas fa-server-slash fa-4x mb-4"></i>
+                    <h5 class="fw-bold">Node Unreachable</h5>
+                    <p class="small">Connection timeout or server offline.</p>
+                </div>`;
+        } finally {
+            runBtn.disabled = false;
+            loadingSpinner.style.display = "none";
+            btnText.textContent = "Execute Intelligence";
+        }
+    }
+
+    function renderTable(rows) {
+        const tableContainer = document.getElementById("tableContainer");
+        tableContainer.innerHTML = "";
+        tableContainer.classList.remove('d-flex', 'align-items-center', 'justify-content-center');
+
+        const table = document.createElement("table");
+        table.className = "table table-hover mb-0";
+        
+        const thead = document.createElement("thead");
+        const headerRow = document.createElement("tr");
+        const columns = Object.keys(rows[0]);
+
+        columns.forEach(col => {
+            const th = document.createElement("th");
+            th.textContent = col;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+        rows.forEach(row => {
+            const tr = document.createElement("tr");
+            columns.forEach(col => {
+                const td = document.createElement("td");
+                td.textContent = row[col];
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+
+        tableContainer.appendChild(table);
+    }
+
+    function copySql() {
+        const sql = document.getElementById("sqlOutput").textContent;
+        navigator.clipboard.writeText(sql).then(() => {
+            const copyBtn = document.querySelector(".copy-btn");
+            const originalHtml = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check me-1"></i>Copied';
+            copyBtn.style.background = 'rgba(16, 185, 129, 0.2)';
+            copyBtn.style.borderColor = '#10b981';
+            copyBtn.style.color = '#10b981';
+            setTimeout(() => { 
+                copyBtn.innerHTML = originalHtml;
+                copyBtn.style.background = '';
+                copyBtn.style.borderColor = '';
+                copyBtn.style.color = '';
+            }, 2000);
+        });
+    }
+
+    function viewFullOutput() {
+        const modalTableContainer = document.getElementById("modalTableContainer");
+        const originalTable = document.querySelector("#tableContainer table");
+        
+        if (originalTable) {
+            modalTableContainer.innerHTML = "";
+            const clonedTable = originalTable.cloneNode(true);
+            clonedTable.classList.add('table-striped'); // Optional: make it even more readable in full view
+            modalTableContainer.appendChild(clonedTable);
+            const myModal = new bootstrap.Modal(document.getElementById('fullViewModal'));
+            myModal.show();
+        }
+    }
+
+    function exportToCsv() {
+        if (!currentRows || currentRows.length === 0) return;
+        
+        const headers = Object.keys(currentRows[0]);
+        const rows = currentRows.map(row => 
+            headers.map(header => JSON.stringify(row[header] || "")).join(",")
+        );
+        
+        const csvContent = [headers.join(","), ...rows].join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", `query_export_${new Date().getTime()}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Initialize
+    updateHistoryUI();
+</script>
+
+<!-- Bootstrap Bundle JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
