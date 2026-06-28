@@ -1,124 +1,78 @@
-# Complex Test Queries for Text-to-SQL
+# AI Model Testing: Complex SQL Scenarios (IVAC Project)
 
-এই ফাইলটিতে `nexacorp_schema.sql` এর উপর ভিত্তি করে কিছু জটিল (Complex) Natural Language কুয়েরি এবং তাদের সম্ভাব্য SQL দেওয়া হলো। এগুলো প্রজেক্টের validation এবং performance টেস্ট করার জন্য ব্যবহার করা যেতে পারে।
+এই ফাইলটিতে কিছু জটিল ন্যাচারাল ল্যাঙ্গুয়েজ প্রশ্ন দেওয়া হয়েছে যা আপনি AI মডেলকে জিজ্ঞেস করে তার দক্ষতা যাচাই করতে পারেন। এই প্রশ্নগুলো জয়েন, এগ্রিগেশন এবং বিজনেস রুলসের সমন্বয়ে তৈরি।
 
-### ১. Multi-table Join ও Aggregation
-**প্রশ্ন:** প্রতিটা ডিপার্টমেন্টের নাম এবং সেই ডিপার্টমেন্টে বর্তমানে কতজন 'ACTIVE' এমপ্লয়ি আছে এবং তাদের মোট বেতন কত, তা দেখাও।
+---
 
-**সম্ভাব্য SQL:**
-```sql
-SELECT d.name, COUNT(e.id) AS employee_count, SUM(e.salary) AS total_salary
-FROM departments d
-JOIN employees e ON d.id = e.department_id
-WHERE e.status = 'ACTIVE'
-GROUP BY d.name;
-```
+### Scenario 1: পেমেন্ট ও অ্যাপয়েন্টমেন্ট রিপোর্ট
+**Question:** "Show me the total amount of successful payments for each IVAC center in Dhaka mission for the last 30 days."
+*   **Target Logic:** `appointments` -> `ivac_centers` -> `high_commissions` -> `payment_transactions` টেবিলে জয়েন করতে হবে। পেমেন্ট স্ট্যাটাস 'SUCCESS' হতে হবে এবং টাইমস্ট্যাম্প ফিল্টার করতে হবে।
 
-### ২. Subquery এবং Filter
-**প্রশ্ন:** সেইসব প্রজেক্টের নাম দেখাও যেগুলোর বাজেট গড় (average) প্রজেক্ট বাজেটের চেয়ে বেশি।
+### Scenario 2: ইউজার অ্যাক্টিভিটি ও ব্লকিং চেক
+**Question:** "List all users who have registered in the last 7 days but haven't uploaded any files yet, along with their phone numbers."
+*   **Target Logic:** `users` এবং `appointment_files` এর মধ্যে `LEFT JOIN` করে যেখানে ফাইল আইডি NULL এবং রেজিস্ট্রেশন ডেট ফিল্টার করতে হবে।
 
-**সম্ভাব্য SQL:**
-```sql
-SELECT name, budget
-FROM projects
-WHERE budget > (SELECT AVG(budget) FROM projects);
-```
+### Scenario 3: হাই-ভলিউম অ্যাপয়েন্টমেন্ট সেন্টার
+**Question:** "Which IVAC centers have more than 50 confirmed bookings for the next working day, and who are the high commissions for those centers?"
+*   **Target Logic:** `appointments` এবং `ivac_centers` জয়েন করে `COUNT` করতে হবে এবং `HAVING count > 50` ব্যবহার করতে হবে।
 
-### ৩. Complex Conditional Aggregation
-**প্রশ্ন:** প্রতিটা কাস্টমারের জন্য তাদের মোট অর্ডারের সংখ্যা এবং কতগুলো অর্ডার 'COMPLETED' স্ট্যাটাসে আছে তা বের করো।
+### Scenario 4: ভিসা টাইপ ভিত্তিক পেমেন্ট এনালাইসিস
+**Question:** "What is the average paid amount for 'Tourist Visa' applicants in the Chittagong center who paid via 'SSL' channel?"
+*   **Target Logic:** `appointments_revamp`, `visa_types` এবং `payment_transactions` এর মধ্যে জয়েন। নির্দিষ্ট চ্যানেল এবং ভিসা টাইপ ফিল্টার।
 
-**সম্ভাব্য SQL:**
-```sql
-SELECT c.name, 
-       COUNT(o.id) AS total_orders,
-       COUNT(CASE WHEN o.status = 'COMPLETED' THEN 1 END) AS completed_orders
-FROM customers c
-LEFT JOIN orders o ON c.id = o.customer_id
-GROUP BY c.id, c.name;
-```
+### Scenario 5: কুলিং-অফ পিরিয়ড ভায়োলেশন চেক
+**Question:** "Find users who tried to upload a file within 15 days of their last successful booking."
+*   **Target Logic:** এটি একটি জটিল কুয়েরি যেখানে `appointment_files` টেবিলের `upload_day` এবং `appointments` টেবিলের ডেট কম্পেয়ার করতে হবে (Self-join বা Sub-query লাগতে পারে)।
 
-### ৪. Time-based Analysis এবং Join
-**প্রশ্ন:** ২০২৪ সালে যেসকল ইনভয়েস জেনারেট হয়েছে সেগুলোর জন্য কাস্টমারের নাম, ইনভয়েসের তারিখ এবং ইনভয়েসের পরিমাণ (amount) দেখাও।
+### Scenario 6: ডিলেটেড রেকর্ড ও একটিভ স্ট্যাটাস ফিল্টারিং
+**Question:** "Get the names and emails of all active system users who have 'ADMIN' roles, excluding any deleted records."
+*   **Target Logic:** `system_users`, `system_user_roles` এবং `system_roles` জয়েন। সাথে `is_active = true` এবং `is_deleted = false` ফিল্টার।
 
-**সম্ভাব্য SQL:**
-```sql
-SELECT c.name, i.invoice_date, i.amount
-FROM customers c
-JOIN orders o ON c.id = o.customer_id
-JOIN invoices i ON o.id = i.order_id
-WHERE i.invoice_date BETWEEN '2024-01-01' AND '2024-12-31';
-```
+### Scenario 7: রিফান্ড ট্রানজাকশন এনালাইসিস
+**Question:** "Show the total amount of successfully refunded transactions for the last month, grouped by the original payment channel used."
+*   **Target Logic:** `refund_transactions` এবং `payment_transactions` জয়েন করতে হবে। রিফান্ড স্ট্যাটাস 'SUCCESS' হতে হবে এবং `payment_channel` দিয়ে গ্রুপ করতে হবে।
 
-### ৫. Resource Allocation (Many-to-Many Join)
-**প্রশ্ন:** এমন এমপ্লয়িদের নাম এবং রোলের তালিকা দাও যারা একাধিক (more than 1) প্রজেক্টে কাজ করছে।
+### Scenario 8: মাল্টি-অ্যাপ্লিকেন্ট অ্যাপয়েন্টমেন্ট ট্রেন্ড
+**Question:** "Find the average number of applicants per booking for each visa type in the last 6 months, only for confirmed appointments."
+*   **Target Logic:** `appointments` (বা `appointments_revamp`) এবং `visa_types` জয়েন। `AVG(number_of_applicants)` এগ্রিগেশন এবং নির্দিষ্ট টাইম পিরিয়ড ফিল্টার।
 
-**সম্ভাব্য SQL:**
-```sql
-SELECT e.first_name, e.last_name, e.role
-FROM employees e
-JOIN project_assignments pa ON e.id = pa.employee_id
-GROUP BY e.id, e.first_name, e.last_name, e.role
-HAVING COUNT(pa.project_id) > 1;
-```
+### Scenario 9: পেমেন্ট চ্যানেল ভিত্তিক ফেইলুর রেট
+**Question:** "Identify which payment channel has the highest number of FAILED transactions for appointments in the JFP Dhaka center."
+*   **Target Logic:** `payment_transactions`, `appointments` এবং `ivac_centers` জয়েন। স্ট্যাটাস 'FAILED' ফিল্টার এবং `COUNT` করে `ORDER BY` এবং `LIMIT 1` ব্যবহার করতে হবে।
 
-### ৬. Financial Summary with Multi-level Joins
-**প্রশ্ন:** কোন কাস্টমার এ পর্যন্ত সব মিলিয়ে কত টাকা পেমেন্ট করেছে তা বের করো।
+### Scenario 10: স্লট কনফিগারেশন অডিট ট্র্যাকিং
+**Question:** "List all changes made to the appointment slot configuration for 'Tourist Visa' during June 2026, including who made the changes."
+*   **Target Logic:** `slot_config_audits` এবং `visa_types` জয়েন (যদি অডিটে আইডি থাকে)। তারিখ ফিল্টার এবং ইউজার নেম রিট্রাইভ করা।
 
-**সম্ভাব্য SQL:**
-```sql
-SELECT c.name, SUM(p.amount) AS total_paid
-FROM customers c
-JOIN orders o ON c.id = o.customer_id
-JOIN invoices i ON o.id = i.order_id
-JOIN payments p ON i.id = p.invoice_id
-GROUP BY c.id, c.name;
-```
+### Scenario 11: ডুপ্লিকেট পাসপোর্ট চেক (Security Audit)
+**Question:** "Search for any passport numbers that appear in more than one appointment file uploaded in the last 24 hours."
+*   **Target Logic:** `appointment_files` টেবিলে `passport` কলামে `GROUP BY` করে `HAVING COUNT(*) > 1` চেক করতে হবে। এটি বিজনেস রুল ২৮-এর একটি ভায়োলেশন চেক।
 
-### ৭. Department Performance
-**প্রশ্ন:** সেই ডিপার্টমেন্টের নাম দেখাও যেখানে সবচেয়ে বেশি বাজেটের প্রজেক্ট রয়েছে।
+### Scenario 12: পেমেন্ট চ্যানেল ভিত্তিক মার্কেট শেয়ার ও ট্রেন্ড
+**Question:** "Calculate the percentage contribution of each payment channel to the total revenue generated in June 2026."
+*   **Target Logic:** `SUM(amount)` কে টোটাল অ্যামাউন্ট দিয়ে ভাগ করতে হবে। এখানে উইন্ডো ফাংশন `SUM(amount) OVER()` ব্যবহার করা যেতে পারে অথবা একটি সাব-কুয়েরি দিয়ে টোটাল ক্যালকুলেট করতে হবে।
 
-**সম্ভাব্য SQL:**
-```sql
-SELECT d.name
-FROM departments d
-JOIN projects p ON d.id = p.department_id
-ORDER BY p.budget DESC
-LIMIT 1;
-```
+### Scenario 13: ইউজার এনগেজমেন্ট লেভেল (Segmentation)
+**Question:** "Categorize users into 'Bronze', 'Silver', and 'Gold' based on their total successful application count (Gold: >10, Silver: 5-10, Bronze: <5)."
+*   **Target Logic:** `appointments` এবং `users` জয়েন করে `COUNT` করতে হবে এবং `CASE WHEN` স্টেটমেন্ট ব্যবহার করে ক্যাটাগরি তৈরি করতে হবে।
 
-### ৮. Industry-wise Revenue
-**প্রশ্ন:** কোন ইন্ডাস্ট্রির কাস্টমারদের থেকে সবচেয়ে বেশি রেভিনিউ (total order amount) এসেছে?
+### Scenario 14: কনজিকিউটিভ হলিডে বুকিং এটেম্পট
+**Question:** "Identify users who tried to book appointments on more than 3 different public holidays within the same year."
+*   **Target Logic:** `appointments` এবং `holidays` টেবিল জয়েন করতে হবে। ইউজারের আইডি এবং হলিডে ডেট কম্পেয়ার করে ফিল্টার এবং এগ্রিগেশন করতে হবে।
 
-**সম্ভাব্য SQL:**
-```sql
-SELECT c.industry, SUM(o.total_amount) AS total_revenue
-FROM customers c
-JOIN orders o ON c.id = o.customer_id
-GROUP BY c.industry
-ORDER BY total_revenue DESC;
-```
+### Scenario 15: অপারেটিং আওয়ারের বাইরের পেমেন্ট
+**Question:** "List all successful payments that were made outside the operating hours of their respective IVAC centers (refer to business rules for timings)."
+*   **Target Logic:** `payment_transactions`, `appointments`, এবং `ivac_centers` জয়েন। `txn_time` এর সাথে বিজনেস রুল ১৫-এ দেওয়া সেন্টারের অপারেটিং আওয়ার কম্পেয়ার করতে হবে। এটি AI-এর জন্য বেশ চ্যালেঞ্জিং কারণ তাকে টেক্সট রুল থেকে টাইম লজিক বের করতে হবে।
 
-### ৯. Unpaid Invoices
-**প্রশ্ন:** সেইসব কাস্টমারদের নাম এবং ইনভয়েস আইডি দেখাও যাদের পেমেন্ট এখনও 'PENDING' এবং ডিউ ডেট পার হয়ে গেছে।
+### Scenario 16: ডেইলি অ্যাপয়েন্টমেন্ট গ্রোথ রেট (Window Function)
+**Question:** "Show the day-over-day growth rate in the number of confirmed appointments for the last 14 days."
+*   **Target Logic:** উইন্ডো ফাংশন `LAG()` ব্যবহার করে আগের দিনের অ্যাপয়েন্টমেন্ট সংখ্যা বের করতে হবে এবং বর্তমান দিনের সাথে তুলনা করে গ্রোথ পার্সেন্টেজ বের করতে হবে।
 
-**সম্ভাব্য SQL:**
-```sql
-SELECT c.name, i.id AS invoice_id, i.due_date
-FROM customers c
-JOIN orders o ON c.id = o.customer_id
-JOIN invoices i ON o.id = i.order_id
-WHERE i.status = 'PENDING' AND i.due_date < CURRENT_DATE;
-```
+---
 
-### ১০. Employee Allocation Detail
-**প্রশ্ন:** প্রতিটি প্রজেক্টের নাম এবং সেখানে কতজন এমপ্লয়ি কাজ করছে এবং তাদের গড় অ্যালোকেশন পার্সেন্টেজ কত?
+### AI-কে যেভাবে প্রশ্ন করবেন:
+১. সরাসরি উপরের প্রশ্নগুলো কপি করে চ্যাটবক্সে দিন।
+২. দেখুন AI সঠিক টেবিলগুলো (যেমন: `appointments`, `payment_transactions`) জয়েন করছে কিনা।
+৩. পেমেন্ট বা ইউজার স্ট্যাটাসের ক্ষেত্রে AI বিজনেস রুলস (is_deleted/status) মেনে চলছে কিনা তা চেক করুন।
 
-**সম্ভাব্য SQL:**
-```sql
-SELECT p.name AS project_name, 
-       COUNT(pa.employee_id) AS total_employees, 
-       AVG(pa.allocation_pct) AS avg_allocation
-FROM projects p
-LEFT JOIN project_assignments pa ON p.id = pa.project_id
-GROUP BY p.id, p.name;
-```
+**Note:** আপনার ডাটাবেস কানেকশন সচল হলে আপনি এই কুয়েরিগুলো সরাসরি রান করেও রেজাল্ট দেখতে পারবেন।

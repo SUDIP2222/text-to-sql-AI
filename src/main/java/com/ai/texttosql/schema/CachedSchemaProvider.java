@@ -8,18 +8,18 @@ import java.util.List;
 @Component
 public class CachedSchemaProvider implements SchemaProvider {
 
-    private final SchemaProvider dynamicSchemaProvider;
+    private final SchemaProvider schemaProvider;
 
     private final List<TableSchema> tables;
     private final List<Relationship> relationships;
     private final List<BusinessRule> businessRules;
 
-    public CachedSchemaProvider(@Qualifier("dynamicSchemaProvider") SchemaProvider dynamicSchemaProvider) {
-        this.dynamicSchemaProvider = dynamicSchemaProvider;
+    public CachedSchemaProvider(@Qualifier("fileSchemaProvider") SchemaProvider schemaProvider) {
+        this.schemaProvider = schemaProvider;
 
-        this.tables = dynamicSchemaProvider.getTables();
-        this.relationships = dynamicSchemaProvider.getRelationships();
-        this.businessRules = dynamicSchemaProvider.getBusinessRules();
+        this.tables = schemaProvider.getTables();
+        this.relationships = schemaProvider.getRelationships();
+        this.businessRules = schemaProvider.getBusinessRules();
     }
 
     @Override

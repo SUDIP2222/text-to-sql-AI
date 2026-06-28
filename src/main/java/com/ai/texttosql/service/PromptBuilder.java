@@ -24,7 +24,7 @@ public class PromptBuilder {
 
         String tables = schemaProvider.getTables().stream()
                 .map(this::renderTable)
-                .collect(Collectors.joining("\n"));
+                .collect(Collectors.joining("\n\n"));
 
         String relationships = schemaProvider.getRelationships().stream()
                 .map(this::renderRelationship)
@@ -35,43 +35,43 @@ public class PromptBuilder {
                 .collect(Collectors.joining("\n"));
 
         return """
-               You are an assistant that generates SQL queries for a PostgreSQL database. 
+               You are an expert PostgreSQL developer. Your task is to generate a highly accurate SQL query based on the provided schema, relationships, and business rules.
 
-               Database schema:
+               ### DATABASE SCHEMA:
                %s
 
-               Relationship:
+               ### TABLE RELATIONSHIPS (Foreign Keys):
                %s
                
-               Business rules:
+               ### BUSINESS RULES & CONSTRAINTS:
                %s
                
-                Instructions:
-                   - Return ONLY the SQL query.
-                   - Do NOT include explanations.
-                   - Do NOT include markdown.
-                   - Do NOT include code fences.
-                   - The output must be a single SQL statement.
+               ### INSTRUCTIONS:
+               1. Use ONLY the tables and columns provided in the schema above.
+               2. Always use explicit JOINs based on the defined relationships.
+               3. Apply business rules (like filtering deleted records) where applicable.
+               4. Return ONLY the raw SQL query. No explanations, no markdown, no code blocks.
+               5. Ensure the SQL is valid PostgreSQL syntax.
 
-               Generate a SQL query for the following question:
+               ### QUESTION:
                %s
+
+               ### SQL QUERY:
                """.formatted(tables, relationships, rules, question);
 
     }
 
     private String renderTable(TableSchema table) {
         String columns = table.getColumns().stream()
-                .map(this::renderColumn)
+                .map(column -> "  - " + column.getName() + " (" + column.getDescription().replace("Data type: ", "") + ")")
                 .collect(Collectors.joining("\n"));
 
         return """
                 Table: %s
-                Description: %s
                 Columns:
                 %s
                 """.formatted(
                 table.getTableName(),
-                table.getDescription(),
                 columns
         ).trim();
     }
@@ -81,7 +81,7 @@ public class PromptBuilder {
     }
 
     private String renderRelationship(Relationship relationship) {
-        return "- %s.%s references %s.%s".formatted(
+        return "- %s.%s = %s.%s".formatted(
                 relationship.getFromTable(),
                 relationship.getFromColumn(),
                 relationship.getToTable(),

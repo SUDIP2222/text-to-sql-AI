@@ -14,7 +14,10 @@ public class SqlExecutionService {
     private final JdbcTemplate jdbcTemplate;
 
     public List<Map<String, Object>> execute(String sql) {
-
-        return jdbcTemplate.queryForList(sql);
+        try {
+            return jdbcTemplate.queryForList(sql);
+        } catch (Exception e) {
+            return List.of(Map.of("error", "Database connection failed: " + e.getMessage()));
+        }
     }
 }
