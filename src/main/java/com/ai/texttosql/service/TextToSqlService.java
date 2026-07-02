@@ -28,6 +28,7 @@ public class TextToSqlService {
         log.info("Prompting text to sql request: {}", prompt);
 
         String generatedSql = chatClient.prompt(prompt)
+                .system("You are a Senior PostgreSQL Architect. Always follow performance best practices. Return ONLY the SQL query without any markdown formatting or explanation.")
                 .call().content();
         generatedSql = normalizeSql(generatedSql);
 
@@ -39,8 +40,14 @@ public class TextToSqlService {
     }
 
     private String normalizeSql(String sql) {
-        return sql
-                .replaceAll("\\s+", " ")
+        if (sql == null) return "";
+        
+        // Remove markdown code blocks if present
+        String result = sql.replaceAll("```sql", "")
+                          .replaceAll("```", "")
+                          .trim();
+        
+        return result.replaceAll("\\s+", " ")
                 .trim();
     }
 }
