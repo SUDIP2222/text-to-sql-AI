@@ -3,11 +3,14 @@ package com.ai.texttosql.schema;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -15,13 +18,19 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FileSchemaProvider implements SchemaProvider {
 
-    @Value("${app.schema.file-path:Schema.txt}")
+    private final ResourceLoader resourceLoader;
+
+    public FileSchemaProvider(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
+    }
+
+    @Value("${app.schema.file-path:classpath:schema/Schema.txt}")
     private String schemaFilePath;
 
-    @Value("${app.relationship.file-path:forien-key.txt}")
+    @Value("${app.relationship.file-path:classpath:schema/forien-key.txt}")
     private String relationshipFilePath;
 
-    @Value("${app.business-rules.file-path:database_business_rules.txt}")
+    @Value("${app.business-rules.file-path:classpath:schema/database_business_rules.txt}")
     private String businessRulesFilePath;
 
     private List<TableSchema> tables = new ArrayList<>();
@@ -37,19 +46,21 @@ public class FileSchemaProvider implements SchemaProvider {
 
     private void loadBusinessRules() {
         try {
-            if (!Files.exists(Paths.get(businessRulesFilePath))) {
+            Resource resource = resourceLoader.getResource(businessRulesFilePath);
+            if (!resource.exists()) {
                 log.warn("Business rules file not found: {}. Using default rules.", businessRulesFilePath);
                 businessRules = getDefaultRules();
                 return;
             }
 
-            List<String> lines = Files.readAllLines(Paths.get(businessRulesFilePath));
-            businessRules = lines.stream()
-                    .map(String::trim)
-                    .filter(line -> line.startsWith("- "))
-                    .map(line -> new BusinessRule(line.substring(2).trim()))
-                    .collect(Collectors.toList());
-            
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
+                businessRules = reader.lines()
+                        .map(String::trim)
+                        .filter(line -> line.startsWith("- "))
+                        .map(line -> new BusinessRule(line.substring(2).trim()))
+                        .collect(Collectors.toList());
+            }
+
             if (businessRules.isEmpty()) {
                 businessRules = getDefaultRules();
             }
@@ -72,26 +83,34 @@ public class FileSchemaProvider implements SchemaProvider {
 
     private void loadSchema() {
         try {
-            if (schemaFilePath.endsWith("Databse_schema.txt")) {
-                loadFromFormattedFile();
+            Resource resource = resourceLoader.getResource(schemaFilePath);
+            if (!resource.exists()) {
+                log.error("Schema file not found: {}", schemaFilePath);
                 return;
             }
-            List<String> lines = Files.readAllLines(Paths.get(schemaFilePath));
+
+            if (schemaFilePath.endsWith("Databse_schema.txt")) {
+                loadFromFormattedFile(resource);
+                return;
+            }
+
             Map<String, List<ColumnSchema>> tableColumnsMap = new LinkedHashMap<>();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.trim().isEmpty()) {
+                        continue;
+                    }
+                    String[] parts = line.split(",");
+                    if (parts.length >= 2) {
+                        String tableName = parts[0].trim();
+                        String columnName = parts[1].trim();
+                        String dataType = parts.length > 2 ? parts[2].trim() : "unknown";
 
-            for (String line : lines) {
-                if (line == null || line.trim().isEmpty()) {
-                    continue;
-                }
-                String[] parts = line.split(",");
-                if (parts.length >= 2) {
-                    String tableName = parts[0].trim();
-                    String columnName = parts[1].trim();
-                    String dataType = parts.length > 2 ? parts[2].trim() : "unknown";
-
-                    tableColumnsMap
-                            .computeIfAbsent(tableName, k -> new ArrayList<>())
-                            .add(new ColumnSchema(columnName, "Data type: " + dataType));
+                        tableColumnsMap
+                                .computeIfAbsent(tableName, k -> new ArrayList<>())
+                                .add(new ColumnSchema(columnName, "Data type: " + dataType));
+                    }
                 }
             }
 
@@ -105,24 +124,26 @@ public class FileSchemaProvider implements SchemaProvider {
         }
     }
 
-    private void loadFromFormattedFile() throws IOException {
-        List<String> lines = Files.readAllLines(Paths.get(schemaFilePath));
+    private void loadFromFormattedFile(Resource resource) throws IOException {
         String currentTable = null;
         Map<String, List<ColumnSchema>> tableColumnsMap = new LinkedHashMap<>();
 
-        for (String line : lines) {
-            line = line.trim();
-            if (line.startsWith("Table:")) {
-                currentTable = line.substring(6).trim();
-            } else if (line.startsWith("- ") && currentTable != null) {
-                String content = line.substring(2).trim();
-                int bracketIndex = content.indexOf('(');
-                String columnName = bracketIndex != -1 ? content.substring(0, bracketIndex).trim() : content;
-                String dataType = bracketIndex != -1 ? content.substring(bracketIndex + 1, content.length() - 1).trim() : "unknown";
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.startsWith("Table:")) {
+                    currentTable = line.substring(6).trim();
+                } else if (line.startsWith("- ") && currentTable != null) {
+                    String content = line.substring(2).trim();
+                    int bracketIndex = content.indexOf('(');
+                    String columnName = bracketIndex != -1 ? content.substring(0, bracketIndex).trim() : content;
+                    String dataType = bracketIndex != -1 ? content.substring(bracketIndex + 1, content.length() - 1).trim() : "unknown";
 
-                tableColumnsMap
-                        .computeIfAbsent(currentTable, k -> new ArrayList<>())
-                        .add(new ColumnSchema(columnName, "Data type: " + dataType));
+                    tableColumnsMap
+                            .computeIfAbsent(currentTable, k -> new ArrayList<>())
+                            .add(new ColumnSchema(columnName, "Data type: " + dataType));
+                }
             }
         }
         tables = tableColumnsMap.entrySet().stream()
@@ -133,29 +154,32 @@ public class FileSchemaProvider implements SchemaProvider {
 
     private void loadRelationships() {
         try {
-            if (!Files.exists(Paths.get(relationshipFilePath))) {
+            Resource resource = resourceLoader.getResource(relationshipFilePath);
+            if (!resource.exists()) {
                 log.warn("Relationship file not found: {}", relationshipFilePath);
                 return;
             }
 
-            List<String> lines = Files.readAllLines(Paths.get(relationshipFilePath));
             Set<String> uniqueRelationships = new HashSet<>();
             relationships = new ArrayList<>();
 
-            for (String line : lines) {
-                if (line == null || line.trim().isEmpty()) {
-                    continue;
-                }
-                String[] parts = line.split(",");
-                if (parts.length >= 4) {
-                    String fromTable = parts[0].trim();
-                    String fromColumn = parts[1].trim();
-                    String toTable = parts[2].trim();
-                    String toColumn = parts[3].trim();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.trim().isEmpty()) {
+                        continue;
+                    }
+                    String[] parts = line.split(",");
+                    if (parts.length >= 4) {
+                        String fromTable = parts[0].trim();
+                        String fromColumn = parts[1].trim();
+                        String toTable = parts[2].trim();
+                        String toColumn = parts[3].trim();
 
-                    String key = fromTable + "." + fromColumn + "->" + toTable + "." + toColumn;
-                    if (uniqueRelationships.add(key)) {
-                        relationships.add(new Relationship(fromTable, fromColumn, toTable, toColumn));
+                        String key = fromTable + "." + fromColumn + "->" + toTable + "." + toColumn;
+                        if (uniqueRelationships.add(key)) {
+                            relationships.add(new Relationship(fromTable, fromColumn, toTable, toColumn));
+                        }
                     }
                 }
             }
