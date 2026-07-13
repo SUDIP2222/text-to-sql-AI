@@ -1,12 +1,3 @@
-### DATABASE SCHEMA:
-Table: appointment_capacity
-Columns:
-  - appointment_date (date)
-  - center_id (uuid)
-  - visa_type_id (uuid)
-  - capacity (integer)
-  - confirmed_count (integer)
-
 Table: appointment_date
 Columns:
   - id (uuid)
@@ -198,7 +189,7 @@ Columns:
   - high_commission_id (uuid)
   - center_id (uuid)
   - visa_type_id (uuid)
-  - count (integer)
+  - count (integer) //capacity
   - is_active (boolean)
   - created_by (uuid)
   - created_at (timestamp with time zone)
@@ -356,28 +347,6 @@ Columns:
   - updated_at (timestamp without time zone)
   - created_by (uuid)
   - updated_by (uuid)
-
-Table: priority_appointment_booking_old
-Columns:
-  - id (uuid)
-  - high_commission_id (uuid)
-  - center_id (uuid)
-  - visa_type_id (uuid)
-  - web_file_number (character varying)
-  - passport (character varying)
-  - nid (character varying)
-  - date_of_birth (character varying)
-  - first_name (character varying)
-  - last_name (character varying)
-  - email (character varying)
-  - phone (character varying)
-  - status (character varying)
-  - booking_date (timestamp with time zone)
-  - is_active (boolean)
-  - created_by (uuid)
-  - created_at (timestamp with time zone)
-  - updated_by (uuid)
-  - updated_at (timestamp with time zone)
 
 Table: priority_booking_citizens
 Columns:

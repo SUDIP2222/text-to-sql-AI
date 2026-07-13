@@ -23,7 +23,6 @@
             --border-color: #e2e8f0;
             --text-main: #1e293b;
             --text-muted: #64748b;
-            --sidebar-width: 280px;
         }
 
         body {
@@ -70,26 +69,12 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Style */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: #ffffff;
-            border-right: 1px solid var(--border-color);
-            padding: 2rem 1.25rem;
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            height: 100vh;
-            z-index: 100;
-            transition: all 0.3s ease;
-            box-shadow: 4px 0 24px rgba(0,0,0,0.02);
-        }
-
         .main-content {
             flex-grow: 1;
-            margin-left: var(--sidebar-width);
-            padding: 2.5rem;
-            width: calc(100% - var(--sidebar-width));
+            padding: 1.5rem 2.5rem;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .sidebar-title {
@@ -288,8 +273,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         @media (max-width: 992px) {
-            .sidebar { transform: translateX(-100%); }
-            .main-content { margin-left: 0; width: 100%; padding: 1.5rem; }
+            .main-content { padding: 1.5rem; }
         }
     </style>
 </head>
@@ -301,64 +285,44 @@
 </div>
 
 <div class="main-wrapper">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="mb-5">
-            <a class="navbar-brand fw-bold d-flex align-items-center" href="#" style="font-size: 1.25rem; color: var(--text-main); text-decoration: none;">
-                <div class="bg-primary rounded-3 p-1 me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                    <i class="fas fa-bolt text-white fa-sm"></i>
-                </div>
-                <span>AiS<span class="text-primary">QL</span></span>
-            </a>
-        </div>
-        
-        <div class="sidebar-title"><i class="fas fa-clock-rotate-left"></i> History</div>
-        <div id="queryHistory" class="flex-grow-1 overflow-auto">
-            <div class="text-center py-5 text-muted small opacity-50">
-                <i class="fas fa-history d-block mb-2 fa-2x"></i>
-                No queries yet
-            </div>
-        </div>
-
-        <div class="mt-4 pt-4 border-top border-light">
-            <div class="card p-3 bg-light border-0">
-                <div class="small fw-bold mb-1">Database Node</div>
-                <div class="status-badge status-success py-1 px-0 bg-transparent">
-                    <span class="spinner-grow spinner-grow-sm" style="width: 8px; height: 8px;"></span>
-                    Online
-                </div>
-            </div>
-        </div>
-    </aside>
-
     <!-- Main Content -->
     <main class="main-content">
         <div class="container-fluid px-0">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <a class="navbar-brand fw-bold d-flex align-items-center" href="#" style="font-size: 1.25rem; color: var(--text-main); text-decoration: none;">
+                    <div class="bg-primary rounded-3 p-1 me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                        <i class="fas fa-bolt text-white fa-sm"></i>
+                    </div>
+                    <span>AiS<span class="text-primary">QL</span></span>
+                </a>
+                <div class="d-flex gap-3">
+                    <div class="status-badge status-success bg-white border py-1 px-3">
+                        <span class="spinner-grow spinner-grow-sm text-success" style="width: 6px; height: 6px;"></span>
+                        DB Connected
+                    </div>
+                </div>
+            </div>
+
             <div class="row">
                 <!-- Header / Input -->
-                <div class="col-12 mb-5">
-                    <header class="mb-5">
-                        <h1 class="fw-bold mb-2">Natural Language <span class="text-primary">to SQL</span></h1>
-                        <p class="text-muted lead" style="font-size: 1rem;">Query your database using plain English. AI handles the rest.</p>
-                    </header>
-
+                <div class="col-12 mb-4">
                     <div class="card p-4">
                         <div class="mb-3">
                             <label for="questionInput" class="form-label d-flex justify-content-between align-items-center mb-3">
-                                <span class="fw-bold"><i class="fas fa-keyboard me-2 text-primary"></i>What would you like to know?</span>
+                                <span class="fw-bold"><i class="fas fa-keyboard me-2 text-primary"></i>Natural Language to SQL</span>
                                 <button class="btn btn-sm text-muted p-0 border-0" onclick="clearInput()">Clear</button>
                             </label>
-                            <textarea id="questionInput" class="form-control" rows="3" 
-                                placeholder="e.g. List all employees who joined last month and earn more than 50000"></textarea>
+                            <textarea id="questionInput" class="form-control" rows="2" 
+                                placeholder="e.g. Show me all confirmed appointments for JFP center"></textarea>
                         </div>
                         
                         <div class="mb-4">
-                            <div class="text-muted small mb-2 fw-bold uppercase">Quick Examples:</div>
                             <div id="examples">
-                                <span class="example-chip" onclick="setExample(this)">Top 10 highest paid employees</span>
-                                <span class="example-chip" onclick="setExample(this)">Departments with no active staff</span>
-                                <span class="example-chip" onclick="setExample(this)">Total salary expense per department</span>
-                                <span class="example-chip" onclick="setExample(this)">Employees with missing managers</span>
+                                <span class="example-chip" onclick="setExample(this)">Show active users registered in last 7 days</span>
+                                <span class="example-chip" onclick="setExample(this)">Total confirmed appointments for each center</span>
+                                <span class="example-chip" onclick="setExample(this)">List appointments for JFP center tomorrow</span>
+                                <span class="example-chip" onclick="setExample(this)">Find all pending payments for Rajshahi center</span>
+                                <span class="example-chip" onclick="setExample(this)">Show visa types with more than 100 capacities</span>
                             </div>
                         </div>
 
@@ -448,7 +412,7 @@
 
     function updateHistoryUI() {
         const historyContainer = document.getElementById("queryHistory");
-        if (queryHistory.length === 0) return;
+        if (!historyContainer || queryHistory.length === 0) return;
         
         historyContainer.innerHTML = queryHistory.slice(0, 10).map(q => `
             <div class="history-item" onclick="setQuery('${q.replace(/'/g, "\\'")}')" title="${q}">
@@ -524,7 +488,7 @@
                     <div class="text-center py-5 text-danger opacity-75">
                         <i class="fas fa-triangle-exclamation fa-4x mb-4"></i>
                         <h5 class="fw-bold">Execution Failed</h5>
-                        <p class="small">Refer to the error log in the sidebar.</p>
+                        <p class="small">The AI generated an invalid query or the database rejected it.</p>
                     </div>`;
                 return;
             }
