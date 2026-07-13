@@ -1,0 +1,718 @@
+Table: appointment_date
+Columns:
+  - id (uuid)
+  - slot_day (date)
+  - created_at (timestamp with time zone)
+
+Table: appointment_files
+Columns:
+  - id (uuid)
+  - appointment_id (uuid)
+  - web_file_number (character varying)
+  - original_file_name (character varying)
+  - s3_key (character varying)
+  - signed_url (character varying)
+  - checksum_sha256 (character varying)
+  - status (character varying)
+  - high_commission_id (uuid)
+  - passport (character varying)
+  - dob (character varying)
+  - visa_application_date (character varying)
+  - visa_type_id (uuid)
+  - applicant_name (character varying)
+  - email (character varying)
+  - phone (character varying)
+  - nid_or_br (character varying)
+  - extracted_json (text)
+  - deleted (boolean)
+  - is_primary_file (boolean)
+  - upload_day (date)
+  - created_by (uuid)
+  - created_at (timestamp without time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp without time zone)
+
+Table: appointment_files_revamp
+Columns:
+  - id (uuid)
+  - user_id (uuid)
+  - applicant_type (character varying)
+  - upload_day (date)
+  - original_filename (text)
+  - size_bytes (bigint)
+  - s3_bucket (text)
+  - s3_key (text)
+  - signed_url (text)
+  - checksum_sha256 (text)
+  - status (text)
+  - ocr_job_id (text)
+  - error_message (text)
+  - created_at (timestamp with time zone)
+  - updated_at (timestamp with time zone)
+  - processed_at (timestamp with time zone)
+  - webfile_number (character varying)
+  - primary_web_file_number (character varying)
+  - commission (character varying)
+  - passport (character varying)
+  - dob (character varying)
+  - application_date (character varying)
+  - visa_type (character varying)
+  - name (character varying)
+  - email (character varying)
+  - phone (character varying)
+  - nid_or_br (character varying)
+  - extracted_json (text)
+  - is_deleted (boolean)
+  - is_primary (boolean)
+
+Table: appointments
+Columns:
+  - id (uuid)
+  - number_of_applicants (integer)
+  - appointment_date (date)
+  - appointment_time (character varying)
+  - high_commission_id (uuid)
+  - ivac_center_id (uuid)
+  - status (character varying)
+  - payment_id (uuid)
+  - created_by (uuid)
+  - created_at (timestamp without time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp without time zone)
+  - reserve_slot_at (timestamp with time zone)
+
+Table: appointments_revamp
+Columns:
+  - id (uuid)
+  - user_id (uuid)
+  - primary_webfile_number (character varying)
+  - other_webfile_numbers (ARRAY)
+  - visa_types (ARRAY)
+  - number_of_applicants (integer)
+  - appointment_date (date)
+  - payment_channel (character varying)
+  - paid_amount (numeric)
+  - mission (character varying)
+  - ivac_center (character varying)
+  - appointment_time (time without time zone)
+  - is_confirmed (boolean)
+  - reservation_id (character varying)
+  - payment_id (character varying)
+  - created_at (timestamp with time zone)
+  - updated_at (timestamp with time zone)
+
+Table: auth_tokens
+Columns:
+  - id (uuid)
+  - user_id (uuid)
+  - token_type (character varying)
+  - token_value (character varying)
+  - token_provider (character varying)
+  - provider_id (character varying)
+  - is_revoked (boolean)
+  - is_deleted (boolean)
+  - is_expired (boolean)
+  - created_at (timestamp with time zone)
+  - updated_at (timestamp with time zone)
+  - created_by (character varying)
+  - updated_by (character varying)
+
+Table: error_log
+Columns:
+  - id (bigint)
+  - unique_id (character varying)
+  - method_name (character varying)
+  - raw_payload (text)
+  - error (text)
+  - created_at (timestamp with time zone)
+
+Table: file_details
+Columns:
+  - id (uuid)
+  - user_id (uuid)
+  - appointment_file_id (uuid)
+  - webfile_number (character varying)
+  - original_filename (text)
+  - signed_url (text)
+  - commission (character varying)
+  - passport (character varying)
+  - dob (character varying)
+  - application_date (character varying)
+  - visa_type (character varying)
+  - name (character varying)
+  - email (character varying)
+  - phone (character varying)
+  - extracted_json (text)
+  - created_at (timestamp with time zone)
+
+Table: flyway_schema_history
+Columns:
+  - installed_rank (integer)
+  - version (character varying)
+  - description (character varying)
+  - type (character varying)
+  - script (character varying)
+  - checksum (integer)
+  - installed_by (character varying)
+  - installed_on (timestamp without time zone)
+  - execution_time (integer)
+  - success (boolean)
+
+Table: high_commissions
+Columns:
+  - id (uuid)
+  - mission_name (character varying)
+  - city (character varying)
+  - code (character varying)
+  - is_active (boolean)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+
+Table: holidays
+Columns:
+  - id (uuid)
+  - occasion_name (character varying)
+  - start_date (timestamp with time zone)
+  - end_date (timestamp with time zone)
+  - description (character varying)
+  - is_active (boolean)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+
+Table: ivac_appointment_config
+Columns:
+  - id (uuid)
+  - high_commission_id (uuid)
+  - center_id (uuid)
+  - visa_type_id (uuid)
+  - count (integer) //capacity
+  - is_active (boolean)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+
+Table: ivac_appointment_start_config
+Columns:
+  - id (uuid)
+  - appointment_open_time (time without time zone)
+  - timezone (character varying)
+  - effective_from (date)
+  - effective_to (date)
+  - is_active (boolean)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+
+Table: ivac_centers
+Columns:
+  - id (uuid)
+  - high_commission_id (uuid)
+  - center_name (character varying)
+  - address_line_1 (character varying)
+  - address_line_2 (character varying)
+  - city (character varying)
+  - postal_code (character varying)
+  - contact_email (character varying)
+  - contact_phone (character varying)
+  - is_active (boolean)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+
+Table: ivac_web_contents
+Columns:
+  - id (uuid)
+  - content_type (character varying)
+  - content_title (character varying)
+  - content_description (text)
+  - display_order (integer)
+  - effective_from (timestamp with time zone)
+  - effective_to (timestamp with time zone)
+  - is_active (boolean)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+
+Table: otp_requests
+Columns:
+  - id (uuid)
+  - otp_code (character varying)
+  - otp_hash (character varying)
+  - otp_channel (character varying)
+  - otp_phone (character varying)
+  - otp_email (character varying)
+  - request_id (character varying)
+  - expires_at (timestamp with time zone)
+  - otp_status (character varying)
+  - attempt_count (integer)
+  - verified_at (timestamp with time zone)
+  - created_at (timestamp with time zone)
+  - updated_at (timestamp with time zone)
+  - created_by (character varying)
+  - updated_by (character varying)
+
+Table: password_reset_tokens
+Columns:
+  - id (uuid)
+  - user_id (uuid)
+  - token_hash (character varying)
+  - expires_at (timestamp with time zone)
+  - used (boolean)
+  - used_at (timestamp with time zone)
+  - created_at (timestamp with time zone)
+
+Table: payment_session_config
+Columns:
+  - id (uuid)
+  - session_in_min (integer)
+  - effective_from (timestamp with time zone)
+  - effective_to (timestamp with time zone)
+  - is_active (boolean)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+
+Table: payment_transactions
+Columns:
+  - id (uuid)
+  - amount (double precision)
+  - txn_id (character varying)
+  - txn_time (timestamp with time zone)
+  - payment_by (character varying)
+  - invoice_number (character varying)
+  - status (character varying)
+  - payment_channel (character varying)
+  - val_id (character varying)
+  - bank_tran_id (character varying)
+  - gateway_payload (character varying)
+  - created_by (uuid)
+  - created_at (timestamp without time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp without time zone)
+
+Table: payment_transactions_20260303
+Columns:
+  - id (uuid)
+  - mission_name (character varying)
+  - city (character varying)
+  - amount (character varying)
+  - txr_id (character varying)
+  - payment_by (character varying)
+  - invoice_number (character varying)
+  - status (character varying)
+  - user_id (uuid)
+  - created_at (timestamp without time zone)
+  - web_file_primary (character varying)
+  - web_file_1 (character varying)
+  - web_file_2 (character varying)
+  - web_file_3 (character varying)
+  - txr_time (timestamp with time zone)
+  - payment_channel (character varying)
+  - val_id (character varying)
+  - bank_tran_id (character varying)
+  - gateway_payload (character varying)
+  - appointment_date (date)
+  - appointment_slot (character varying)
+  - ivac_name (character varying)
+  - number_of_applicants (integer)
+  - updated_at (timestamp without time zone)
+
+Table: permissions
+Columns:
+  - id (uuid)
+  - display_name (character varying)
+  - description (character varying)
+  - api_path (character varying)
+  - module_name (character varying)
+  - created_at (timestamp with time zone)
+  - updated_at (timestamp with time zone)
+  - created_by (character varying)
+  - updated_by (character varying)
+
+Table: priority_appointment_booking
+Columns:
+  - id (uuid)
+  - status (character varying)
+  - booking_date (timestamp with time zone)
+  - created_at (timestamp without time zone)
+  - updated_at (timestamp without time zone)
+  - created_by (uuid)
+  - updated_by (uuid)
+
+Table: priority_booking_citizens
+Columns:
+  - id (uuid)
+  - priority_appointment_booking_id (uuid)
+  - high_commission_id (uuid)
+  - center_id (uuid)
+  - visa_type_id (uuid)
+  - web_file_number (character varying)
+  - passport (character varying)
+  - nid (character varying)
+  - date_of_birth (character varying)
+  - first_name (character varying)
+  - last_name (character varying)
+  - email (character varying)
+  - phone (character varying)
+  - status (character varying)
+  - is_active (boolean)
+  - is_primary (boolean)
+  - created_at (timestamp without time zone)
+  - updated_at (timestamp without time zone)
+  - created_by (uuid)
+  - updated_by (uuid)
+
+Table: priority_payment_transactions
+Columns:
+  - id (uuid)
+  - mission_name (character varying)
+  - city (character varying)
+  - amount (character varying)
+  - txr_id (character varying)
+  - booking_id (uuid)
+  - invoice_number (character varying)
+  - status (character varying)
+  - web_file_primary (character varying)
+  - payment_channel (character varying)
+  - val_id (character varying)
+  - bank_tran_id (character varying)
+  - gateway_payload (character varying)
+  - user_id (uuid)
+  - txr_time (timestamp with time zone)
+  - created_at (timestamp without time zone)
+
+Table: refund_transactions
+Columns:
+  - id (uuid)
+  - amount (character varying)
+  - appointment_id (uuid)
+  - txr_id (character varying)
+  - bank_tran_id (character varying)
+  - refund_ref_id (character varying)
+  - ssl_val_id (character varying)
+  - txr_time (timestamp with time zone)
+  - invoice_number (character varying)
+  - payment_channel (character varying)
+  - status (character varying)
+  - error_reason (character varying)
+  - booking_type (character varying)
+  - initiated_on (character varying)
+  - refunded_on (character varying)
+  - created_at (timestamp without time zone)
+  - updated_at (timestamp without time zone)
+
+Table: role_permissions
+Columns:
+  - role_id (uuid)
+  - permission_id (uuid)
+  - assigned_at (timestamp with time zone)
+
+Table: roles
+Columns:
+  - id (uuid)
+  - role_code (character varying)
+  - role_name (character varying)
+  - role_status (character varying)
+  - is_deleted (boolean)
+  - created_at (timestamp with time zone)
+  - updated_at (timestamp with time zone)
+  - created_by (character varying)
+  - updated_by (character varying)
+
+Table: slot_config_audits
+Columns:
+  - id (uuid)
+  - appointment_date (date)
+  - config_json (jsonb)
+  - effective_from (timestamp with time zone)
+  - effective_to (timestamp with time zone)
+  - is_active (boolean)
+  - created_by (character varying)
+  - created_at (timestamp with time zone)
+  - updated_by (character varying)
+  - updated_at (timestamp with time zone)
+
+Table: system_roles
+Columns:
+  - id (uuid)
+  - role_name (character varying)
+  - role_code (character varying)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+
+Table: system_user_roles
+Columns:
+  - user_id (uuid)
+  - role_id (uuid)
+
+Table: system_user_wise_ivac_centers
+Columns:
+  - id (uuid)
+  - ivac_center_id (uuid)
+  - user_id (uuid)
+  - high_commission_id (uuid)
+  - active (boolean)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+
+Table: system_users
+Columns:
+  - id (uuid)
+  - user_name (character varying)
+  - name (character varying)
+  - email (character varying)
+  - phone (character varying)
+  - password_hash (character varying)
+  - password_updated_at (timestamp with time zone)
+  - active (boolean)
+  - reset_password (boolean)
+  - login_attempts (integer)
+  - last_login (timestamp with time zone)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+
+Table: time_config
+Columns:
+  - id (uuid)
+  - otp_ttl (integer)
+  - token_ttl (integer)
+  - user_session (integer)
+  - payment_session (integer)
+  - slot_open (character varying)
+  - slot_close (character varying)
+  - file_up_start (character varying)
+  - file_up_end (character varying)
+  - remarks (character varying)
+  - description (character varying)
+  - effective_from (timestamp with time zone)
+  - effective_to (timestamp with time zone)
+  - is_active (boolean)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+  - user_logout (character varying)
+
+Table: user_block_logs
+Columns:
+  - id (uuid)
+  - phone_numbers (text)
+  - reason (text)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+
+Table: user_credentials
+Columns:
+  - id (uuid)
+  - user_id (uuid)
+  - password_hash (character varying)
+  - password_alg (character varying)
+  - password_expiry (date)
+  - is_active (boolean)
+  - unsuccessful_login_attempt (integer)
+  - is_deleted (boolean)
+  - created_at (timestamp with time zone)
+  - updated_at (timestamp with time zone)
+  - created_by (character varying)
+  - updated_by (character varying)
+
+Table: user_device_audit_logs
+Columns:
+  - id (uuid)
+  - user_id (uuid)
+  - client_ip (character varying)
+  - device_id (text)
+  - user_agent (text)
+  - browser (character varying)
+  - device_name (character varying)
+  - device_type (character varying)
+  - country (character varying)
+  - country_code (character varying)
+  - continent (character varying)
+  - continent_code (character varying)
+  - asn (character varying)
+  - asn_name (character varying)
+  - asn_domain (character varying)
+  - end_point (character varying)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+
+Table: user_device_audit_logs_backup_1
+Columns:
+  - id (uuid)
+  - user_id (uuid)
+  - client_ip (character varying)
+  - device_id (text)
+  - user_agent (text)
+  - browser (character varying)
+  - device_name (character varying)
+  - device_type (character varying)
+  - country (character varying)
+  - country_code (character varying)
+  - continent (character varying)
+  - continent_code (character varying)
+  - asn (character varying)
+  - asn_name (character varying)
+  - asn_domain (character varying)
+  - end_point (character varying)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+
+Table: user_identities
+Columns:
+  - id (uuid)
+  - user_id (uuid)
+  - provider (character varying)
+  - provider_sub (character varying)
+  - provider_id (character varying)
+  - verification_medium (character varying)
+  - login_attempts (integer)
+  - last_login (timestamp with time zone)
+  - is_deleted (boolean)
+  - created_at (timestamp with time zone)
+  - updated_at (timestamp with time zone)
+  - created_by (character varying)
+  - updated_by (character varying)
+
+Table: user_roles
+Columns:
+  - user_id (uuid)
+  - role_id (uuid)
+  - assigned_at (timestamp with time zone)
+
+Table: users
+Columns:
+  - id (uuid)
+  - username (character varying)
+  - first_name (character varying)
+  - last_name (character varying)
+  - email (character varying)
+  - phone (character varying)
+  - full_name (character varying)
+  - nid (character varying)
+  - passport (character varying)
+  - dob (character varying)
+  - password_hash (character varying)
+  - password_updated_at (timestamp with time zone)
+  - is_active (boolean)
+  - is_email_verified (boolean)
+  - is_phone_verified (boolean)
+  - login_attempts (integer)
+  - last_login (timestamp with time zone)
+  - is_deleted (boolean)
+  - created_at (timestamp with time zone)
+  - updated_at (timestamp with time zone)
+  - created_by (character varying)
+  - updated_by (character varying)
+  - profile_updated_at (timestamp with time zone)
+  - is_updatable (boolean)
+
+Table: validation_config
+Columns:
+  - id (uuid)
+  - file_upload_limit (integer)
+  - forgot_password_limit (integer)
+  - app_link_expiry_minutes (integer)
+  - otp_lock_expiry_seconds (integer)
+  - reset_url (character varying)
+  - remarks (character varying)
+  - description (character varying)
+  - effective_from (timestamp with time zone)
+  - effective_to (timestamp with time zone)
+  - is_active (boolean)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+
+Table: visa_types
+Columns:
+  - id (uuid)
+  - visa_name (character varying)
+  - visa_code (character varying)
+  - description (text)
+  - max_validity_days (integer)
+  - is_multiple_entry (boolean)
+  - is_active (boolean)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+  - parent_visa_type_id (uuid)
+
+Table: visa_types_revamp
+Columns:
+  - id (uuid)
+  - visa_name (character varying)
+  - visa_code (character varying)
+  - description (text)
+  - max_validity_days (integer)
+  - is_multiple_entry (boolean)
+  - is_active (boolean)
+  - created_by (uuid)
+  - created_at (timestamp with time zone)
+  - updated_by (uuid)
+  - updated_at (timestamp with time zone)
+
+### TABLE RELATIONSHIPS (Foreign Keys):
+- user_identities.user_id = users.id
+- auth_tokens.user_id = users.id
+- user_roles.user_id = users.id
+- user_roles.role_id = roles.id
+- role_permissions.role_id = roles.id
+- role_permissions.permission_id = permissions.id
+- ivac_centers.high_commission_id = high_commissions.id
+- user_credentials.user_id = users.id
+- ivac_appointment_config.high_commission_id = high_commissions.id
+- ivac_appointment_config.center_id = ivac_centers.id
+- appointment_files_revamp.user_id = users.id
+- file_details.user_id = users.id
+- file_details.appointment_file_id = appointment_files_revamp.id
+- appointments_revamp.user_id = users.id
+- priority_appointment_booking_old.high_commission_id = high_commissions.id
+- priority_appointment_booking_old.center_id = ivac_centers.id
+- priority_appointment_booking_old.visa_type_id = visa_types_revamp.id
+- priority_appointment_booking_old.visa_type_id = visa_types.id
+- priority_payment_transactions.user_id = system_users.id
+- system_user_roles.user_id = system_users.id
+- system_user_roles.role_id = system_roles.id
+- system_user_wise_ivac_centers.ivac_center_id = ivac_centers.id
+- system_user_wise_ivac_centers.user_id = system_users.id
+- system_user_wise_ivac_centers.high_commission_id = high_commissions.id
+- password_reset_tokens.user_id = system_users.id
+- appointments.high_commission_id = high_commissions.id
+- appointments.ivac_center_id = ivac_centers.id
+- appointments.payment_id = payment_transactions.id
+- appointment_files.appointment_id = appointments.id
+- appointment_files.high_commission_id = high_commissions.id
+- visa_types.parent_visa_type_id = visa_types.id
+- appointment_files.visa_type_id = visa_types.id
+- ivac_appointment_config.visa_type_id = visa_types_revamp.id
+- ivac_appointment_config.visa_type_id = visa_types.id
+- user_device_audit_logs.user_id = users.id
+
+### BUSINESS RULES & CONSTRAINTS:
+- Always filter out deleted records: use 'is_deleted = false' or 'deleted = false' or 'is_revoked = false' depending on the table columns.
+- Use 'is_active = true' or 'active = true' for tables that have an active status flag to get valid records.
+- For joining tables, strictly follow the Foreign Key relationships provided.
+- Use PostgreSQL specific functions if needed (e.g., NOW(), CURRENT_DATE).
+- Handle UUID types correctly, as most ID columns in this schema are UUIDs.

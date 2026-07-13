@@ -1,0 +1,65 @@
+IVAC Appointment Management System - Database & Business Rules
+
+This document outlines the database structure and business logic for the IVAC project, intended for AI model training.
+
+1. User & Authentication Rules:
+- Unique Fields: Email, Phone, Passport, and NID must be unique for each user.
+- NID Validation: NID must be exactly 10, 13, or 17 digits.
+- Registration Timing: New user registration is only allowed between 02:00 PM and 04:30 PM (Dhaka Time).
+- Session Timeout: Login sessions expire after 10 minutes of inactivity.
+- OTP Policy: There is a maximum limit on OTP verification attempts to prevent brute-force attacks.
+
+2. Appointment & Booking Rules:
+- Cooling-off Period: After a successful appointment, the user cannot upload new files for the next 15 days.
+- Availability: Appointment slots are not available on weekends or public holidays.
+- Center-Specific Timing (Operating Hours):
+  * Dhaka (JFP): 09:00 AM - 03:00 PM
+  * Chittagong: 09:00 AM - 12:00 PM
+  * Rajshahi: 09:00 AM - 12:00 PM
+  * Khulna: 09:00 AM - 12:30 PM
+  * Sylhet: 09:00 AM - 10:00 AM
+- Appointment Date: Must be the "Next Working Day" as resolved by the system.
+- Group Booking: A single user can book for multiple applicants simultaneously.
+
+3. File Upload & Validation Rules:
+- Format: Only PDF files are allowed.
+- Size: File size must be at least 50KB.
+- Mandatory Fields: Web File Number, Passport Number, Surname, Given Name, Date of Birth (DOB), Phone, and Email are required.
+- Global Uniqueness: A passport number contained within a Web File cannot exist in any other uploaded file.
+
+4. Payment Rules:
+- Payment Statuses: PENDING, SUCCESS, FAILED, CANCELLED, EXPIRED, INITIATED.
+- Payment Channels: SSL (SSLCommerz) and DGEPAY.
+- Amount Validation: Total payment amount must exactly equal (Number of Applicants × Fixed Application Fee).
+
+5. IVAC Center & High Commission:
+- Hierarchy: Each IVAC Center belongs to a specific High Commission.
+- Access Control: Users can only access information for their authorized IVAC Center or High Commission.
+- Visa Configuration: Appointment configurations and slot availability vary based on the Visa Type.
+
+6. Database Entities & Key Fields:
+
+   A. User (Table: users)
+   - Fields: id (UUID), username, email, phone, nid, passport, dob, password_hash, is_active, created_at.
+
+   B. Appointment (Table: appointments)
+   - Fields: id (UUID), number_of_applicants, appointment_date, appointment_time, status, high_commission_id, ivac_center_id, payment_id.
+   - Statuses: WEB_FILE_UPLOADED, MISSION_CENTER_SELECTED, SLOT_SELECTED, PAYMENT_INITIATED, BOOKING_CONFIRMED, BOOKING_FAILED.
+
+   C. AppointmentFile (Table: appointment_files)
+   - Fields: id (UUID), appointment_id, web_file_number, passport, applicant_name, email, phone, nid_or_br, visa_type_id, is_primary_file, upload_day.
+
+   D. PaymentTransaction (Table: payment_transactions)
+   - Fields: id (UUID), amount, txn_id, txn_time, payment_by, invoice_number, status, payment_channel, bank_tran_id.
+   - Statuses: PENDING, SUCCESS, FAILED, CANCELLED, EXPIRED, INITIATED.
+
+   E. IvacCenter (Table: ivac_centers)
+   - Fields: id (UUID), high_commission_id, center_name, city, is_active.
+
+7. Entity Relationships:
+- Appointment -> IvacCenter (Many-to-One)
+- Appointment -> HighCommission (Many-to-One)
+- Appointment -> PaymentTransaction (Many-to-One)
+- AppointmentFile -> Appointment (Many-to-One)
+- AppointmentConfig -> VisaType (Many-to-One)
+- VisaType -> SubVisaTypes (One-to-Many, Self-referencing)
